@@ -16,11 +16,18 @@
         _NoiseFreq("Noise Frequency", Float) = 1.1
         _NoiseOffset("Noise Offset", Float) = 0
         _NoiseAmplitude("Noise Amplitude", Float) = 1
+
+        [Space]
+        _SunSize ("Sun Size", Range(0,1)) = 0.04
+        
+        _AtmosphereThickness ("Atmoshpere Thickness", Range(0,5)) = 1.0
+        _SkyTint ("Sky Tint", Color) = (.5, .5, .5, 1)
+        _GroundColor ("Ground", Color) = (.369, .349, .341, 1)
+
+        _Exposure("Exposure", Range(0, 8)) = 1.3
     }
 
     CGINCLUDE
-
-    #include "UnityCG.cginc"
 
     static const int kLightSampleCount = 30;
     static const int kCloudSampleCount = 30;
@@ -33,8 +40,13 @@
     struct v2f
     {
         float4 vertex : SV_POSITION;
-        float3 texcoord : TEXCOORD0;
+        float3 rayDir : TEXCOORD0;
+        float3 groundColor : TEXCOORD1;
+        float3 skyColor : TEXCOORD2;
+        float3 sunColor : TEXCOORD3;
     };
+
+    #include "ProceduralSky.cginc"
 
     sampler3D _NoiseTex;
 
@@ -75,20 +87,20 @@
     {
         v2f o;
         o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-        o.texcoord = v.vertex.xyz;
+        vert_sky(v.vertex.xyz, o);
         return o;
     }
 
     fixed4 frag(v2f i) : SV_Target
     {
-        float3 v = i.texcoord;
+        float3 v = -i.rayDir;
         if (v.y <= 0.01) return 0;
 
         float d0 = _Altitude0 / v.y;
         float d1 = _Altitude1 / v.y;
 
         float stride = (d1 - d0) / kCloudSampleCount;
-        float3 acc = float3(0.2, 0.5, 0.6);
+        float3 acc = frag_sky(i);
         float3 pos = _WorldSpaceCameraPos + v * d0;
 
         [loop]

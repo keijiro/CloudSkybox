@@ -100,6 +100,18 @@ Material:
         second: 0.5
       data:
         first:
+          name: _Exposure
+        second: 0.69
+      data:
+        first:
+          name: _SunSize
+        second: 0.073
+      data:
+        first:
+          name: _AtmosphereThickness
+        second: 0.83
+      data:
+        first:
           name: _Altitude0
         second: 1000
       data:
@@ -171,3 +183,11 @@ Material:
         first:
           name: _Color
         second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SkyTint
+        second: {r: 0.77205884, g: 0.77205884, b: 0.77205884, a: 1}
+      data:
+        first:
+          name: _GroundColor
+        second: {r: 0.36899996, g: 0.34899998, b: 0.34099993, a: 1}
