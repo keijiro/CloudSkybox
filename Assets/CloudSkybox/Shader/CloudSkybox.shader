@@ -29,8 +29,8 @@
 
     CGINCLUDE
 
-    static const int kLightSampleCount = 30;
-    static const int kCloudSampleCount = 30;
+    static const int kLightSampleCount = 50;
+    static const int kCloudSampleCount = 50;
 
     struct appdata_t
     {
@@ -70,14 +70,16 @@
 
     float MarchLight(float3 pos)
     {
-        float stride = (_Altitude1 - pos.y) / kLightSampleCount + 1;
+        float3 light = _WorldSpaceLightPos0.xyz;
+
+        float stride = (_Altitude1 / light.y - pos.y / light.y) / kLightSampleCount + 1;
         float acc = 1;
 
         while (pos.y < _Altitude1)
         {
             float n = SampleNoise(pos);
             acc *= exp(-_Extinct * n * stride);
-            pos.y += stride;
+            pos += light * stride;
         }
 
         return acc;
