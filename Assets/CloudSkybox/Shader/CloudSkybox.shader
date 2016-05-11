@@ -166,7 +166,7 @@
                 float density = n * stride;
                 float rand = UVRandom(uv + s);
                 float scatter = density * _Scatter * hg * MarchLight(pos, rand);
-                acc += scatter * BeerPowder(depth);
+                acc += _LightColor0 * scatter * BeerPowder(depth);
                 depth += density;
             }
             pos += ray * stride;
