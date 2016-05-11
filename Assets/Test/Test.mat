@@ -105,11 +105,11 @@ Material:
       data:
         first:
           name: _SunSize
-        second: 0.05
+        second: 0.03
       data:
         first:
           name: _AtmosphereThickness
-        second: 0.7
+        second: 0.8
       data:
         first:
           name: _Altitude0
@@ -169,7 +169,7 @@ Material:
       data:
         first:
           name: _Scatter
-        second: 0.005
+        second: 0.007
       data:
         first:
           name: _Extinct
