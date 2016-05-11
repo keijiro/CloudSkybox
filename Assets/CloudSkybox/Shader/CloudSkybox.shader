@@ -77,6 +77,12 @@
     float _HGCoeff;
     float _Extinct;
 
+    float UVRandom(float2 uv)
+    {
+        float f = dot(float2(12.9898, 78.233), uv);
+        return frac(43758.5453 * sin(f));
+    }
+
     float SampleNoise(float3 uvw)
     {
         const float baseFreq = 1e-5;
@@ -143,7 +149,10 @@
         float3 light = _WorldSpaceLightPos0.xyz;
         float hg = HenyeyGreenstein(dot(ray, light));
 
-        float3 pos = _WorldSpaceCameraPos + ray * dist0;
+        float2 uv = i.vertex.xy * (_ScreenParams.zw - 1);
+        float offs = UVRandom(uv) * (dist1 - dist0) / samples;
+
+        float3 pos = _WorldSpaceCameraPos + ray * (dist0 + offs);
         float3 acc = 0;
 
         float depth = 0;

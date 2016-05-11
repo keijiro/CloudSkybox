@@ -205,11 +205,11 @@ Material:
       data:
         first:
           name: _SampleCount0
-        second: 30
+        second: 16
       data:
         first:
           name: _SampleCount1
-        second: 60
+        second: 40
     m_Colors:
       data:
         first:
