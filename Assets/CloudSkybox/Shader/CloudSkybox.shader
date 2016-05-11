@@ -118,10 +118,12 @@
         return exp(-_Extinct * depth) * (1 - exp(-_Extinct * 2 * depth));
     }
 
-    float MarchLight(float3 pos)
+    float MarchLight(float3 pos, float rand)
     {
         float3 light = _WorldSpaceLightPos0.xyz;
         float stride = (_Altitude1 - pos.y) / (light.y * kLightSampleCount);
+
+        pos += light * stride * rand;
 
         float depth = 0;
         [loop] for (int s = 0; s < kLightSampleCount; s++)
@@ -149,7 +151,7 @@
         float3 light = _WorldSpaceLightPos0.xyz;
         float hg = HenyeyGreenstein(dot(ray, light));
 
-        float2 uv = i.vertex.xy * (_ScreenParams.zw - 1);
+        float2 uv = i.vertex.xy * (_ScreenParams.zw - 1) + _Time.x;
         float offs = UVRandom(uv) * (dist1 - dist0) / samples;
 
         float3 pos = _WorldSpaceCameraPos + ray * (dist0 + offs);
@@ -162,7 +164,8 @@
             if (n > 0)
             {
                 float density = n * stride;
-                float scatter = density * _Scatter * hg * MarchLight(pos);
+                float rand = UVRandom(uv + s);
+                float scatter = density * _Scatter * hg * MarchLight(pos, rand);
                 acc += scatter * BeerPowder(depth);
                 depth += density;
             }
