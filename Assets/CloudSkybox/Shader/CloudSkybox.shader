@@ -10,6 +10,7 @@
 
         [Space]
         _Scatter("Scattering Coeff", Float) = 0.008
+        _HGCoeff("Henyey-Greenstein", Float) = 0.5
         _Extinct("Extinction Coeff", Float) = 0.01
 
         [Space]
@@ -19,18 +20,16 @@
 
         [Space]
         _SunSize ("Sun Size", Range(0,1)) = 0.04
-        
         _AtmosphereThickness ("Atmoshpere Thickness", Range(0,5)) = 1.0
         _SkyTint ("Sky Tint", Color) = (.5, .5, .5, 1)
         _GroundColor ("Ground", Color) = (.369, .349, .341, 1)
-
         _Exposure("Exposure", Range(0, 8)) = 1.3
     }
 
     CGINCLUDE
 
-    static const int kLightSampleCount = 50;
-    static const int kCloudSampleCount = 50;
+    static const int kLightSampleCount = 10;
+    static const int kCloudSampleCount = 40;
 
     struct appdata_t
     {
@@ -54,6 +53,7 @@
     float _Altitude1;
 
     float _Scatter;
+    float _HGCoeff;
     float _Extinct;
 
     float _NoiseFreq;
@@ -65,14 +65,15 @@
         float d = exp(-0.0001 * length(uvw.xz));
         uvw *= _NoiseFreq * 1e-5;
         float n = tex3Dlod(_NoiseTex, float4(uvw, 0)).a * 2 - 1;
+        n += (tex3Dlod(_NoiseTex, float4(uvw*11.13, 0)).a * 2 - 1) * 0.2;
         return max(0.0, n * _NoiseAmplitude + _NoiseOffset) * d;
     }
 
-    float MarchLight(float3 pos)
+    float MarchTowardLight(float3 pos)
     {
         float3 light = _WorldSpaceLightPos0.xyz;
 
-        float stride = (_Altitude1 / light.y - pos.y / light.y) / kLightSampleCount + 1;
+        float stride = max((_Altitude1 - pos.y) / (light.y * kLightSampleCount),  1);
         float acc = 1;
 
         while (pos.y < _Altitude1)
@@ -93,10 +94,15 @@
         return o;
     }
 
+    float HG(float cs)
+    {
+        const float g = _HGCoeff;
+        return 0.5 * (1 - g * g) / pow(1 + g * g - 2 * g * cs, 1.5);
+    }
+
     fixed4 frag(v2f i) : SV_Target
     {
         float3 v = -i.rayDir;
-        if (v.y <= 0.01) return 0;
 
         float d0 = _Altitude0 / v.y;
         float d1 = _Altitude1 / v.y;
@@ -105,12 +111,16 @@
         float3 acc = frag_sky(i);
         float3 pos = _WorldSpaceCameraPos + v * d0;
 
+        float cs = dot(v, _WorldSpaceLightPos0.xyz);
+        float hg = HG(cs);
+
+        if (v.y > 0.01)
         [loop]
         for (float d = d0; d < d1; d += stride)
         {
             float n = SampleNoise(pos);
             acc *= exp(-_Extinct * n * stride);
-            acc += n * stride * _Scatter * MarchLight(pos);
+            acc += n * stride * _Scatter * hg * MarchTowardLight(pos);
             pos += v * stride;
         }
 
