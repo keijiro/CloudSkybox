@@ -101,15 +101,15 @@ Material:
       data:
         first:
           name: _Exposure
-        second: 0.69
+        second: 1.1
       data:
         first:
           name: _SunSize
-        second: 0.073
+        second: 0.05
       data:
         first:
           name: _AtmosphereThickness
-        second: 0.83
+        second: 0.8
       data:
         first:
           name: _Altitude0
@@ -117,7 +117,7 @@ Material:
       data:
         first:
           name: _Altitude1
-        second: 5000
+        second: 3500
       data:
         first:
           name: _NoiseFreq
@@ -125,11 +125,11 @@ Material:
       data:
         first:
           name: _NoiseOffset
-        second: -0
+        second: 0
       data:
         first:
           name: _NoiseAmplitude
-        second: 0.84
+        second: 1
       data:
         first:
           name: _Parallax
@@ -169,11 +169,15 @@ Material:
       data:
         first:
           name: _Scatter
-        second: 0.007
+        second: 0.01
       data:
         first:
           name: _Extinct
         second: 0.008
+      data:
+        first:
+          name: _HGCoeff
+        second: 0.5
     m_Colors:
       data:
         first:
@@ -186,7 +190,7 @@ Material:
       data:
         first:
           name: _SkyTint
-        second: {r: 0.77205884, g: 0.77205884, b: 0.77205884, a: 1}
+        second: {r: 0.5588235, g: 0.5588235, b: 0.5588235, a: 1}
       data:
         first:
           name: _GroundColor

@@ -73,15 +73,34 @@
     {
         float3 light = _WorldSpaceLightPos0.xyz;
 
-        float stride = max((_Altitude1 - pos.y) / (light.y * kLightSampleCount),  1);
+        float p0 = pos.y      / light.y;
+        float p1 = _Altitude1 / light.y;
+        float stride = (p1 - p0) / kLightSampleCount;
+        
         float acc = 1;
+        float d = 0;
 
-        while (pos.y < _Altitude1)
+        for (int i = 0; i < kLightSampleCount; i++)
         {
             float n = SampleNoise(pos);
-            acc *= exp(-_Extinct * n * stride);
+
+            if (n > 0.0)
+            {
+                d += n * stride;
+            }
+            else if (d > 0)
+            {
+        //        acc *= exp(-_Extinct * d);
+//                acc *= 1 - exp(-2 * _Extinct * d);
+         //       d = 0;
+            }
+
             pos += light * stride;
         }
+
+        if (d > 0)
+            acc *= exp(-_Extinct * d)
+         * (1 - exp(-2 * _Extinct * d));
 
         return acc;
     }
@@ -104,25 +123,46 @@
     {
         float3 v = -i.rayDir;
 
-        float d0 = _Altitude0 / v.y;
-        float d1 = _Altitude1 / v.y;
+        float p0 = _Altitude0 / v.y;
+        float p1 = _Altitude1 / v.y;
+        float stride = (p1 - p0) / kCloudSampleCount;
 
-        float stride = (d1 - d0) / kCloudSampleCount;
-        float3 acc = frag_sky(i);
-        float3 pos = _WorldSpaceCameraPos + v * d0;
+        float3 acc = 0;
+        float3 pos = _WorldSpaceCameraPos + v * p0;
 
         float cs = dot(v, _WorldSpaceLightPos0.xyz);
         float hg = HG(cs);
 
+        float d = 0;
+
         if (v.y > 0.01)
         [loop]
-        for (float d = d0; d < d1; d += stride)
+        for (int idx = 0; idx < kCloudSampleCount; idx++)
         {
             float n = SampleNoise(pos);
-            acc *= exp(-_Extinct * n * stride);
+            if (n > 0.0)
+            {
+                d += n * stride;
+                acc += n * stride * _Scatter * hg * MarchTowardLight(pos) * exp(-_Extinct * d)
+         ;//* (1 - exp(-2 * _Extinct * d));
+            }
+            else if (d > 0.01)
+            {
+                //acc *= exp(-_Extinct * d);
+//                acc *= 1 - exp(-2 * _Extinct * d);
+                //d = 0;
+            }
+            /*
+            acc *= exp(-_Extinct * n * stride);// * (1.0 - exp(-2.0 * _Extinct * n * stride));
             acc += n * stride * _Scatter * hg * MarchTowardLight(pos);
+            */
             pos += v * stride;
         }
+
+        //if (d > 0)
+            //acc *= exp(-_Extinct * d);
+
+        acc += frag_sky(i) * exp(-_Extinct * d);
 
         return half4(acc, 1);
     }
