@@ -112,6 +112,26 @@ Material:
         second: 0.8
       data:
         first:
+          name: _NoiseFreq1
+        second: 3.1
+      data:
+        first:
+          name: _NoiseFreq2
+        second: 30
+      data:
+        first:
+          name: _NoiseAmp1
+        second: 5
+      data:
+        first:
+          name: _NoiseAmp2
+        second: 1.1
+      data:
+        first:
+          name: _NoiseBias
+        second: -0
+      data:
+        first:
           name: _Altitude0
         second: 1000
       data:
@@ -120,16 +140,20 @@ Material:
         second: 3500
       data:
         first:
-          name: _NoiseFreq
-        second: 3
+          name: _FarDist
+        second: 22000
       data:
         first:
-          name: _NoiseOffset
-        second: -0.2
+          name: _Scatter
+        second: 0.007
       data:
         first:
-          name: _NoiseAmplitude
-        second: 5
+          name: _HGCoeff
+        second: 0.25
+      data:
+        first:
+          name: _Extinct
+        second: 0.001
       data:
         first:
           name: _Parallax
@@ -168,40 +192,24 @@ Material:
         second: 0
       data:
         first:
-          name: _Scatter
-        second: 0.007
+          name: _NoiseFreq
+        second: 3
       data:
         first:
-          name: _Extinct
-        second: 0.001
+          name: _NoiseOffset
+        second: -0.2
       data:
         first:
-          name: _HGCoeff
-        second: 0.25
-      data:
-        first:
-          name: _NoiseFreq1
-        second: 3.1
-      data:
-        first:
-          name: _NoiseFreq2
-        second: 30
-      data:
-        first:
-          name: _NoiseAmp1
+          name: _NoiseAmplitude
         second: 5
       data:
         first:
-          name: _NoiseAmp2
-        second: 1.1
+          name: _SampleCount0
+        second: 30
       data:
         first:
-          name: _NoiseBias
-        second: -0
-      data:
-        first:
-          name: _FarDist
-        second: 22000
+          name: _SampleCount1
+        second: 60
     m_Colors:
       data:
         first:

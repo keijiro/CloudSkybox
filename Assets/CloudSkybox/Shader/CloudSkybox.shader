@@ -2,6 +2,10 @@
 {
     Properties
     {
+        _SampleCount0("Sample Count (min)", Float) = 30
+        _SampleCount1("Sample Count (max)", Float) = 90
+
+        [Space]
         _NoiseTex("Noise Volume", 3D) = ""{}
         _NoiseFreq1("Frequency 1", Float) = 3.1
         _NoiseFreq2("Frequency 2", Float) = 35.1
@@ -29,8 +33,7 @@
 
     CGINCLUDE
 
-    static const int kLightSampleCount = 20;
-    static const int kCloudSampleCount = 64;
+    static const int kLightSampleCount = 16;
 
     struct appdata_t
     {
@@ -55,6 +58,9 @@
         vert_sky(v.vertex.xyz, o);
         return o;
     }
+
+    float _SampleCount0;
+    float _SampleCount1;
 
     sampler3D _NoiseTex;
     float _NoiseFreq1;
@@ -126,10 +132,11 @@
         float3 sky = frag_sky(i);
 
         float3 ray = -i.rayDir;
+        int samples = lerp(_SampleCount1, _SampleCount0, ray.y);
 
         float dist0 = _Altitude0 / ray.y;
         float dist1 = _Altitude1 / ray.y;
-        float stride = (dist1 - dist0) / kCloudSampleCount;
+        float stride = (dist1 - dist0) / samples;
 
         if (ray.y < 0.01 || dist0 >= _FarDist) return fixed4(sky, 1);
 
@@ -140,7 +147,7 @@
         float3 acc = 0;
 
         float depth = 0;
-        [loop] for (int s = 0; s < kCloudSampleCount; s++)
+        [loop] for (int s = 0; s < samples; s++)
         {
             float n = SampleNoise(pos);
             if (n > 0)
