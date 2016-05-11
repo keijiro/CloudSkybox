@@ -80,19 +80,14 @@
 
         float n1 = tex3Dlod(_NoiseTex, uvw1).a * 2 - 1;
         float n2 = tex3Dlod(_NoiseTex, uvw2).a * 2 - 1;
-
         float n = n1 * _NoiseAmp1 + n2 * _NoiseAmp2;
-
-        float d1 = _FarDist * 0.333;
-        float d2 = _FarDist;
-        float fade = 1 - smoothstep(d1, d2, length(uvw.xz));
 
         float y = uvw.y - _Altitude0;
         float h = _Altitude1 - _Altitude0;
-        fade *= smoothstep(0, h * 0.1, y);
-        fade *= smoothstep(0, h * 0.4, h - y);
+        n *= smoothstep(0, h * 0.1, y);
+        n *= smoothstep(0, h * 0.4, h - y);
 
-        return saturate(n * fade + _NoiseBias);
+        return saturate(n + _NoiseBias);
     }
 
     float HenyeyGreenstein(float cosine)
@@ -131,11 +126,12 @@
         float3 sky = frag_sky(i);
 
         float3 ray = -i.rayDir;
-        if (ray.y < 0.01) return fixed4(sky, 1);
 
         float dist0 = _Altitude0 / ray.y;
         float dist1 = _Altitude1 / ray.y;
         float stride = (dist1 - dist0) / kCloudSampleCount;
+
+        if (ray.y < 0.01 || dist0 >= _FarDist) return fixed4(sky, 1);
 
         float3 light = _WorldSpaceLightPos0.xyz;
         float hg = HenyeyGreenstein(dot(ray, light));
@@ -158,6 +154,8 @@
         }
 
         acc += Beer(depth) * sky;
+
+        acc = lerp(acc, sky, saturate(dist0 / _FarDist));
 
         return half4(acc, 1);
     }
