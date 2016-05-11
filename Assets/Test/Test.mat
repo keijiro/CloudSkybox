@@ -40,7 +40,7 @@ Material:
         first:
           name: _NoiseTex
         second:
-          m_Texture: {fileID: 11732318, guid: a5a83f02297df430b9a87c68eedf7e79, type: 2}
+          m_Texture: {fileID: 11703868, guid: c634422be87864f349241d30749ea0c2, type: 2}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -101,7 +101,7 @@ Material:
       data:
         first:
           name: _Exposure
-        second: 1.1
+        second: 1.15
       data:
         first:
           name: _SunSize
@@ -113,19 +113,19 @@ Material:
       data:
         first:
           name: _NoiseFreq1
-        second: 3.1
+        second: 2
       data:
         first:
           name: _NoiseFreq2
-        second: 30
+        second: 17.13
       data:
         first:
           name: _NoiseAmp1
-        second: 5
+        second: 7
       data:
         first:
           name: _NoiseAmp2
-        second: 1.1
+        second: 1.3
       data:
         first:
           name: _NoiseBias
@@ -145,15 +145,15 @@ Material:
       data:
         first:
           name: _Scatter
-        second: 0.007
+        second: 0.006
       data:
         first:
           name: _HGCoeff
-        second: 0.25
+        second: 0.3
       data:
         first:
           name: _Extinct
-        second: 0.001
+        second: 0.0013
       data:
         first:
           name: _Parallax

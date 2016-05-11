@@ -34,7 +34,7 @@ namespace CloudSkybox
             {
                 _texture = new Texture3D(
                     kResolution, kResolution, kResolution,
-                    TextureFormat.Alpha8, true
+                    TextureFormat.Alpha8, false
                 );
                 _texture.name = "Texture3D";
             }
