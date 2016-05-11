@@ -3,20 +3,21 @@
     Properties
     {
         _NoiseTex("Noise Volume", 3D) = ""{}
+        _NoiseFreq1("Frequency 1", Float) = 3.1
+        _NoiseFreq2("Frequency 2", Float) = 35.1
+        _NoiseAmp1("Amplitude 1", Float) = 5
+        _NoiseAmp2("Amplitude 2", Float) = 1
+        _NoiseBias("Bias", Float) = -0.2
 
         [Space]
-        _Altitude0("Altitude (bottom)", Float) = 5000
-        _Altitude1("Altitude (top)", Float) = 6000
+        _Altitude0("Altitude (bottom)", Float) = 1500
+        _Altitude1("Altitude (top)", Float) = 3500
+        _FarDist("Far Distance", Float) = 30000
 
         [Space]
         _Scatter("Scattering Coeff", Float) = 0.008
         _HGCoeff("Henyey-Greenstein", Float) = 0.5
         _Extinct("Extinction Coeff", Float) = 0.01
-
-        [Space]
-        _NoiseFreq("Noise Frequency", Float) = 1.1
-        _NoiseOffset("Noise Offset", Float) = 0
-        _NoiseAmplitude("Noise Amplitude", Float) = 1
 
         [Space]
         _SunSize ("Sun Size", Range(0,1)) = 0.04
@@ -28,8 +29,8 @@
 
     CGINCLUDE
 
-    static const int kLightSampleCount = 10;
-    static const int kCloudSampleCount = 40;
+    static const int kLightSampleCount = 20;
+    static const int kCloudSampleCount = 64;
 
     struct appdata_t
     {
@@ -47,64 +48,6 @@
 
     #include "ProceduralSky.cginc"
 
-    sampler3D _NoiseTex;
-
-    float _Altitude0;
-    float _Altitude1;
-
-    float _Scatter;
-    float _HGCoeff;
-    float _Extinct;
-
-    float _NoiseFreq;
-    float _NoiseOffset;
-    float _NoiseAmplitude;
-
-    float SampleNoise(float3 uvw)
-    {
-        float d = exp(-0.0001 * length(uvw.xz));
-        uvw *= _NoiseFreq * 1e-5;
-        float n = tex3Dlod(_NoiseTex, float4(uvw, 0)).a * 2 - 1;
-        n += (tex3Dlod(_NoiseTex, float4(uvw*11.13, 0)).a * 2 - 1) * 0.2;
-        return max(0.0, n * _NoiseAmplitude + _NoiseOffset) * d;
-    }
-
-    float MarchTowardLight(float3 pos)
-    {
-        float3 light = _WorldSpaceLightPos0.xyz;
-
-        float p0 = pos.y      / light.y;
-        float p1 = _Altitude1 / light.y;
-        float stride = (p1 - p0) / kLightSampleCount;
-        
-        float acc = 1;
-        float d = 0;
-
-        for (int i = 0; i < kLightSampleCount; i++)
-        {
-            float n = SampleNoise(pos);
-
-            if (n > 0.0)
-            {
-                d += n * stride;
-            }
-            else if (d > 0)
-            {
-        //        acc *= exp(-_Extinct * d);
-//                acc *= 1 - exp(-2 * _Extinct * d);
-         //       d = 0;
-            }
-
-            pos += light * stride;
-        }
-
-        if (d > 0)
-            acc *= exp(-_Extinct * d)
-         * (1 - exp(-2 * _Extinct * d));
-
-        return acc;
-    }
-
     v2f vert(appdata_t v)
     {
         v2f o;
@@ -113,56 +56,108 @@
         return o;
     }
 
-    float HG(float cs)
+    sampler3D _NoiseTex;
+    float _NoiseFreq1;
+    float _NoiseFreq2;
+    float _NoiseAmp1;
+    float _NoiseAmp2;
+    float _NoiseBias;
+
+    float _Altitude0;
+    float _Altitude1;
+    float _FarDist;
+
+    float _Scatter;
+    float _HGCoeff;
+    float _Extinct;
+
+    float SampleNoise(float3 uvw)
     {
-        const float g = _HGCoeff;
-        return 0.5 * (1 - g * g) / pow(1 + g * g - 2 * g * cs, 1.5);
+        const float baseFreq = 1e-5;
+
+        float4 uvw1 = float4(uvw * _NoiseFreq1 * baseFreq, 0);
+        float4 uvw2 = float4(uvw * _NoiseFreq2 * baseFreq, 0);
+
+        float n1 = tex3Dlod(_NoiseTex, uvw1).a * 2 - 1;
+        float n2 = tex3Dlod(_NoiseTex, uvw2).a * 2 - 1;
+
+        float n = n1 * _NoiseAmp1 + n2 * _NoiseAmp2;
+
+        float d1 = _FarDist * 0.333;
+        float d2 = _FarDist;
+        float fade = 1 - smoothstep(d1, d2, length(uvw.xz));
+
+        float y = uvw.y - _Altitude0;
+        float h = _Altitude1 - _Altitude0;
+        fade *= smoothstep(0, h * 0.1, y);
+        fade *= smoothstep(0, h * 0.4, h - y);
+
+        return saturate(n * fade + _NoiseBias);
+    }
+
+    float HenyeyGreenstein(float cosine)
+    {
+        float g2 = _HGCoeff * _HGCoeff;
+        return 0.5 * (1 - g2) / pow(1 + g2 - 2 * _HGCoeff * cosine, 1.5);
+    }
+
+    float Beer(float depth)
+    {
+        return exp(-_Extinct * depth);
+    }
+
+    float BeerPowder(float depth)
+    {
+        return exp(-_Extinct * depth) * (1 - exp(-_Extinct * 2 * depth));
+    }
+
+    float MarchLight(float3 pos)
+    {
+        float3 light = _WorldSpaceLightPos0.xyz;
+        float stride = (_Altitude1 - pos.y) / (light.y * kLightSampleCount);
+
+        float depth = 0;
+        [loop] for (int s = 0; s < kLightSampleCount; s++)
+        {
+            depth += SampleNoise(pos) * stride;
+            pos += light * stride;
+        }
+
+        return BeerPowder(depth);
     }
 
     fixed4 frag(v2f i) : SV_Target
     {
-        float3 v = -i.rayDir;
+        float3 sky = frag_sky(i);
 
-        float p0 = _Altitude0 / v.y;
-        float p1 = _Altitude1 / v.y;
-        float stride = (p1 - p0) / kCloudSampleCount;
+        float3 ray = -i.rayDir;
+        if (ray.y < 0.01) return fixed4(sky, 1);
 
+        float dist0 = _Altitude0 / ray.y;
+        float dist1 = _Altitude1 / ray.y;
+        float stride = (dist1 - dist0) / kCloudSampleCount;
+
+        float3 light = _WorldSpaceLightPos0.xyz;
+        float hg = HenyeyGreenstein(dot(ray, light));
+
+        float3 pos = _WorldSpaceCameraPos + ray * dist0;
         float3 acc = 0;
-        float3 pos = _WorldSpaceCameraPos + v * p0;
 
-        float cs = dot(v, _WorldSpaceLightPos0.xyz);
-        float hg = HG(cs);
-
-        float d = 0;
-
-        if (v.y > 0.01)
-        [loop]
-        for (int idx = 0; idx < kCloudSampleCount; idx++)
+        float depth = 0;
+        [loop] for (int s = 0; s < kCloudSampleCount; s++)
         {
             float n = SampleNoise(pos);
-            if (n > 0.0)
+            if (n > 0)
             {
-                d += n * stride;
-                acc += n * stride * _Scatter * hg * MarchTowardLight(pos) * exp(-_Extinct * d)
-         ;//* (1 - exp(-2 * _Extinct * d));
+                float density = n * stride;
+                float scatter = density * _Scatter * hg * MarchLight(pos);
+                acc += scatter * BeerPowder(depth);
+                depth += density;
             }
-            else if (d > 0.01)
-            {
-                //acc *= exp(-_Extinct * d);
-//                acc *= 1 - exp(-2 * _Extinct * d);
-                //d = 0;
-            }
-            /*
-            acc *= exp(-_Extinct * n * stride);// * (1.0 - exp(-2.0 * _Extinct * n * stride));
-            acc += n * stride * _Scatter * hg * MarchTowardLight(pos);
-            */
-            pos += v * stride;
+            pos += ray * stride;
         }
 
-        //if (d > 0)
-            //acc *= exp(-_Extinct * d);
-
-        acc += frag_sky(i) * exp(-_Extinct * d);
+        acc += Beer(depth) * sky;
 
         return half4(acc, 1);
     }
