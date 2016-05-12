@@ -4,6 +4,7 @@
     {
         _SampleCount0("Sample Count (min)", Float) = 30
         _SampleCount1("Sample Count (max)", Float) = 90
+        _SampleCountL("Sample Count (light)", Int) = 16
 
         [Space]
         _NoiseTex1("Noise Volume", 3D) = ""{}
@@ -13,6 +14,10 @@
         _NoiseAmp1("Amplitude 1", Float) = 5
         _NoiseAmp2("Amplitude 2", Float) = 1
         _NoiseBias("Bias", Float) = -0.2
+
+        [Space]
+        _Scroll1("Scroll Speed 1", Vector) = (0.01, 0.08, 0.06, 0)
+        _Scroll2("Scroll Speed 2", Vector) = (0.01, 0.05, 0.03, 0)
 
         [Space]
         _Altitude0("Altitude (bottom)", Float) = 1500
@@ -33,8 +38,6 @@
     }
 
     CGINCLUDE
-
-    static const int kLightSampleCount = 16;
 
     struct appdata_t
     {
@@ -69,6 +72,7 @@
 
     float _SampleCount0;
     float _SampleCount1;
+    int _SampleCountL;
 
     sampler3D _NoiseTex1;
     sampler3D _NoiseTex2;
@@ -77,6 +81,9 @@
     float _NoiseAmp1;
     float _NoiseAmp2;
     float _NoiseBias;
+
+    float3 _Scroll1;
+    float3 _Scroll2;
 
     float _Altitude0;
     float _Altitude1;
@@ -96,8 +103,11 @@
     {
         const float baseFreq = 1e-5;
 
-        float4 uvw1 = float4(uvw * _NoiseFreq1 * baseFreq, 0) + float4(0.21, 0.08, 0.06, 0) * _Time.x;
-        float4 uvw2 = float4(uvw * _NoiseFreq2 * baseFreq, 0) + float4(0.11, 0.05, 0.03, 0) * _Time.x;
+        float4 uvw1 = float4(uvw * _NoiseFreq1 * baseFreq, 0);
+        float4 uvw2 = float4(uvw * _NoiseFreq2 * baseFreq, 0);
+
+        uvw1.xyz += _Scroll1.xyz * _Time.x;
+        uvw2.xyz += _Scroll2.xyz * _Time.x;
 
         float n1 = tex3Dlod(_NoiseTex1, uvw1).a;
         float n2 = tex3Dlod(_NoiseTex2, uvw2).a;
@@ -132,12 +142,12 @@
     float MarchLight(float3 pos, float rand)
     {
         float3 light = _WorldSpaceLightPos0.xyz;
-        float stride = (_Altitude1 - pos.y) / (light.y * kLightSampleCount);
+        float stride = (_Altitude1 - pos.y) / (light.y * _SampleCountL);
 
         pos += light * stride * rand;
 
         float depth = 0;
-        UNITY_LOOP for (int s = 0; s < kLightSampleCount; s++)
+        UNITY_LOOP for (int s = 0; s < _SampleCountL; s++)
         {
             depth += SampleNoise(pos) * stride;
             pos += light * stride;
