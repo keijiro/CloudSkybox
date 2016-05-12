@@ -44,19 +44,26 @@
     struct v2f
     {
         float4 vertex : SV_POSITION;
-        float3 rayDir : TEXCOORD0;
-        float3 groundColor : TEXCOORD1;
-        float3 skyColor : TEXCOORD2;
-        float3 sunColor : TEXCOORD3;
+        float2 uv : TEXCOORD0;
+        float3 rayDir : TEXCOORD1;
+        float3 groundColor : TEXCOORD2;
+        float3 skyColor : TEXCOORD3;
+        float3 sunColor : TEXCOORD4;
     };
 
     #include "ProceduralSky.cginc"
 
     v2f vert(appdata_t v)
     {
+        float4 p = mul(UNITY_MATRIX_MVP, v.vertex);
+
         v2f o;
-        o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+
+        o.vertex = p;
+        o.uv = (p.xy / p.w + 1) * 0.5;
+
         vert_sky(v.vertex.xyz, o);
+
         return o;
     }
 
@@ -130,7 +137,7 @@
         pos += light * stride * rand;
 
         float depth = 0;
-        [loop] for (int s = 0; s < kLightSampleCount; s++)
+        UNITY_LOOP for (int s = 0; s < kLightSampleCount; s++)
         {
             depth += SampleNoise(pos) * stride;
             pos += light * stride;
@@ -155,20 +162,20 @@
         float3 light = _WorldSpaceLightPos0.xyz;
         float hg = HenyeyGreenstein(dot(ray, light));
 
-        float2 uv = i.vertex.xy * (_ScreenParams.zw - 1) + _Time.x;
+        float2 uv = i.uv + _Time.x;
         float offs = UVRandom(uv) * (dist1 - dist0) / samples;
 
         float3 pos = _WorldSpaceCameraPos + ray * (dist0 + offs);
         float3 acc = 0;
 
         float depth = 0;
-        [loop] for (int s = 0; s < samples; s++)
+        UNITY_LOOP for (int s = 0; s < samples; s++)
         {
             float n = SampleNoise(pos);
             if (n > 0)
             {
                 float density = n * stride;
-                float rand = UVRandom(uv + s);
+                float rand = UVRandom(uv + s + 1);
                 float scatter = density * _Scatter * hg * MarchLight(pos, rand * 0.5);
                 acc += _LightColor0 * scatter * BeerPowder(depth);
                 depth += density;
@@ -194,6 +201,7 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
             ENDCG
         }
     }
