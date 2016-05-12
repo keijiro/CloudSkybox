@@ -6,7 +6,8 @@
         _SampleCount1("Sample Count (max)", Float) = 90
 
         [Space]
-        _NoiseTex("Noise Volume", 3D) = ""{}
+        _NoiseTex1("Noise Volume", 3D) = ""{}
+        _NoiseTex2("Noise Volume", 3D) = ""{}
         _NoiseFreq1("Frequency 1", Float) = 3.1
         _NoiseFreq2("Frequency 2", Float) = 35.1
         _NoiseAmp1("Amplitude 1", Float) = 5
@@ -62,7 +63,8 @@
     float _SampleCount0;
     float _SampleCount1;
 
-    sampler3D _NoiseTex;
+    sampler3D _NoiseTex1;
+    sampler3D _NoiseTex2;
     float _NoiseFreq1;
     float _NoiseFreq2;
     float _NoiseAmp1;
@@ -87,19 +89,21 @@
     {
         const float baseFreq = 1e-5;
 
-        float4 uvw1 = float4(uvw * _NoiseFreq1 * baseFreq, 0);
-        float4 uvw2 = float4(uvw * _NoiseFreq2 * baseFreq, 0);
+        float4 uvw1 = float4(uvw * _NoiseFreq1 * baseFreq, 0) + float4(0.21, 0.08, 0.06, 0) * _Time.x;
+        float4 uvw2 = float4(uvw * _NoiseFreq2 * baseFreq, 0) + float4(0.11, 0.05, 0.03, 0) * _Time.x;
 
-        float n1 = tex3Dlod(_NoiseTex, uvw1).a * 2 - 1;
-        float n2 = tex3Dlod(_NoiseTex, uvw2).a * 2 - 1;
+        float n1 = tex3Dlod(_NoiseTex1, uvw1).a;
+        float n2 = tex3Dlod(_NoiseTex2, uvw2).a;
         float n = n1 * _NoiseAmp1 + n2 * _NoiseAmp2;
+
+        n = saturate(n + _NoiseBias);
 
         float y = uvw.y - _Altitude0;
         float h = _Altitude1 - _Altitude0;
         n *= smoothstep(0, h * 0.1, y);
         n *= smoothstep(0, h * 0.4, h - y);
 
-        return saturate(n + _NoiseBias);
+        return n;
     }
 
     float HenyeyGreenstein(float cosine)
@@ -165,7 +169,7 @@
             {
                 float density = n * stride;
                 float rand = UVRandom(uv + s);
-                float scatter = density * _Scatter * hg * MarchLight(pos, rand);
+                float scatter = density * _Scatter * hg * MarchLight(pos, rand * 0.5);
                 acc += _LightColor0 * scatter * BeerPowder(depth);
                 depth += density;
             }

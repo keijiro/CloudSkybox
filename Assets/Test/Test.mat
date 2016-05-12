@@ -85,6 +85,20 @@ Material:
           m_Texture: {fileID: 11703868, guid: c634422be87864f349241d30749ea0c2, type: 2}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _NoiseTex1
+        second:
+          m_Texture: {fileID: 11728776, guid: f93fa8e00a05b48b0a3ae3348c573981, type: 2}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _NoiseTex2
+        second:
+          m_Texture: {fileID: 11760204, guid: 8e30fd58b269d403f8200b53e595bdbe, type: 2}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
         first:
@@ -149,23 +163,23 @@ Material:
       data:
         first:
           name: _NoiseFreq1
-        second: 2
+        second: 1.34
       data:
         first:
           name: _NoiseFreq2
-        second: 17.13
+        second: 13.57
       data:
         first:
           name: _NoiseAmp1
-        second: 7
+        second: -8.5
       data:
         first:
           name: _NoiseAmp2
-        second: 1.3
+        second: 2.49
       data:
         first:
           name: _NoiseBias
-        second: -0
+        second: 2.19
       data:
         first:
           name: _Altitude0
@@ -173,7 +187,7 @@ Material:
       data:
         first:
           name: _Altitude1
-        second: 4000
+        second: 5000
       data:
         first:
           name: _FarDist
@@ -181,15 +195,15 @@ Material:
       data:
         first:
           name: _Scatter
-        second: 0.006
+        second: 0.009
       data:
         first:
           name: _HGCoeff
-        second: 0.3
+        second: 0.4
       data:
         first:
           name: _Extinct
-        second: 0.0013
+        second: 0.0025
       data:
         first:
           name: _NoiseFreq
@@ -205,7 +219,7 @@ Material:
       data:
         first:
           name: _SampleCount0
-        second: 16
+        second: 8
       data:
         first:
           name: _SampleCount1
